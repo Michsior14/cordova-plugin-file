@@ -18,6 +18,7 @@
 */
 package org.apache.cordova.file;
 
+import android.app.Activity;
 import android.os.Environment;
 import android.os.StatFs;
 
@@ -25,7 +26,6 @@ import java.io.File;
 
 /**
  * This class provides file directory utilities.
- * All file operations are performed on the SD card.
  *
  * It is used by the FileUtils class.
  */
@@ -39,16 +39,14 @@ public class DirectoryManager {
      * @param name				The name of the file to check.
      * @return					T=exists, F=not found
      */
-    public static boolean testFileExists(String name) {
+    public static boolean testFileExists(Activity activity, String name) {
         boolean status;
 
-        // If SD card exists
-        if ((testSaveLocationExists()) && (!name.equals(""))) {
-            File path = Environment.getExternalStorageDirectory();
+        if (!name.equals("")) {
+            File path = testSaveLocationExists() ? Environment.getExternalStorageDirectory() : activity.getFilesDir();
             File newPath = constructFilePaths(path.toString(), name);
             status = newPath.exists();
         }
-        // If no SD card
         else {
             status = false;
         }
@@ -72,6 +70,13 @@ public class DirectoryManager {
             return -1;
         }
 
+        return freeSpaceInBytes / 1024;
+    }
+
+    public static long getFreeStorageSpace(Activity activity) {
+        long freeSpaceInBytes = testSaveLocationExists() ?
+            getFreeSpaceInBytes(Environment.getExternalStorageDirectory().getPath()) :
+            getFreeSpaceInBytes(activity.getFilesDir());
         return freeSpaceInBytes / 1024;
     }
 

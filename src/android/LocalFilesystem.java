@@ -418,17 +418,21 @@ public class LocalFilesystem extends Filesystem {
 	}
 
     private boolean isPublicDirectory(String absolutePath) {
-        // TODO: should expose a way to scan app's private files (maybe via a flag).
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            // Lollipop has a bug where SD cards are null.
-            for (File f : context.getExternalMediaDirs()) {
-                if(f != null && absolutePath.startsWith(f.getAbsolutePath())) {
-                    return true;
+        String extPath;
+        if(DirectoryManager.testSaveLocationExists()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                // Lollipop has a bug where SD cards are null.
+                for (File f : context.getExternalMediaDirs()) {
+                    if (f != null && absolutePath.startsWith(f.getAbsolutePath())) {
+                        return true;
+                    }
                 }
             }
-        }
 
-        String extPath = Environment.getExternalStorageDirectory().getAbsolutePath();
+            extPath = Environment.getExternalStorageDirectory().getAbsolutePath();
+        } else {
+            extPath = context.getDataDir().getAbsolutePath();
+        }
         return absolutePath.startsWith(extPath);
     }
 

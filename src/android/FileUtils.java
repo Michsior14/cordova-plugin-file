@@ -86,6 +86,7 @@ public class FileUtils extends CordovaPlugin {
     private boolean configured = false;
 
     private PendingRequests pendingRequests;
+    private Activity activity;
 
 
 
@@ -93,9 +94,7 @@ public class FileUtils extends CordovaPlugin {
      * We need both read and write when accessing the storage, I think.
      */
 
-    private String [] permissions = {
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE };
+    private String [] permissions = {};
 
     // This field exists only to support getEntry, below, which has been deprecated
     private static FileUtils filePlugin;
@@ -122,7 +121,7 @@ public class FileUtils extends CordovaPlugin {
     }
 
     protected String[] getExtraFileSystemsPreference(Activity activity) {
-        String fileSystemsStr = preferences.getString("androidextrafilesystems", "files,files-external,documents,sdcard,cache,cache-external,assets,root");
+        String fileSystemsStr = preferences.getString("androidextrafilesystems", "files,documents,cache,assets");
         return fileSystemsStr.split(",");
     }
 
@@ -179,14 +178,14 @@ public class FileUtils extends CordovaPlugin {
     	String tempRoot = null;
     	String persistentRoot = null;
 
-    	Activity activity = cordova.getActivity();
-    	String packageName = activity.getPackageName();
+    	this.activity = cordova.getActivity();
+    	String packageName = this.activity.getPackageName();
 
         String location = preferences.getString("androidpersistentfilelocation", "internal");
 
-    	tempRoot = activity.getCacheDir().getAbsolutePath();
+    	tempRoot = this.activity.getCacheDir().getAbsolutePath();
     	if ("internal".equalsIgnoreCase(location)) {
-    		persistentRoot = activity.getFilesDir().getAbsolutePath() + "/files/";
+    		persistentRoot = this.activity.getFilesDir().getAbsolutePath() + "/files/";
     		this.configured = true;
     	} else if ("compatibility".equalsIgnoreCase(location)) {
     		/*
@@ -222,7 +221,7 @@ public class FileUtils extends CordovaPlugin {
     		this.registerFilesystem(new ContentFilesystem(webView.getContext(), webView.getResourceApi()));
             this.registerFilesystem(new AssetFilesystem(webView.getContext().getAssets(), webView.getResourceApi()));
 
-            registerExtraFileSystems(getExtraFileSystemsPreference(activity), getAvailableFileSystems(activity));
+            registerExtraFileSystems(getExtraFileSystemsPreference(this.activity), getAvailableFileSystems(this.activity));
 
     		// Initialize static plugin reference for deprecated getEntry method
     		if (filePlugin == null) {
@@ -282,9 +281,7 @@ public class FileUtils extends CordovaPlugin {
             threadhelper( new FileOp( ){
                 public void run(JSONArray args) {
                     // The getFreeDiskSpace plugin API is not documented, but some apps call it anyway via exec().
-                    // For compatibility it always returns free space in the primary external storage, and
-                    // does NOT fallback to internal store if external storage is unavailable.
-                    long l = DirectoryManager.getFreeExternalStorageSpace();
+                    long l = DirectoryManager.getFreeStorageSpace(this.activity);
                     callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, l));
                 }
             }, rawArgs, callbackContext);
@@ -293,7 +290,7 @@ public class FileUtils extends CordovaPlugin {
             threadhelper( new FileOp( ){
                 public void run(JSONArray args) throws JSONException {
                     String fname=args.getString(0);
-                    boolean b = DirectoryManager.testFileExists(fname);
+                    boolean b = DirectoryManager.testFileExists(this.activity, fname);
                     callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, b));
                 }
             }, rawArgs, callbackContext);
@@ -302,7 +299,7 @@ public class FileUtils extends CordovaPlugin {
             threadhelper( new FileOp( ){
                 public void run(JSONArray args) throws JSONException {
                     String fname=args.getString(0);
-                    boolean b = DirectoryManager.testFileExists(fname);
+                    boolean b = DirectoryManager.testFileExists(this.activity, fname);
                     callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, b));
                 }
             }, rawArgs, callbackContext);
@@ -389,11 +386,11 @@ public class FileUtils extends CordovaPlugin {
                     new Runnable() {
                         public void run() {
                         	try {
-					callbackContext.success(requestAllPaths());
-				} catch (JSONException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+                                callbackContext.success(requestAllPaths());
+                            } catch (JSONException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }
                         }
                     }
             );
@@ -574,13 +571,13 @@ public class FileUtils extends CordovaPlugin {
         allowedStorageDirectories.add(j.getString("applicationStorageDirectory"));
         if(j.has("externalApplicationStorageDirectory")) {
             allowedStorageDirectories.add(j.getString("externalApplicationStorageDirectory"));
-        }
 
-        if(permissionType == READ && hasReadPermission()) {
-            return false;
-        }
-        else if(permissionType == WRITE && hasWritePermission()) {
-            return false;
+            if(permissionType == READ && hasReadPermission()) {
+                return false;
+            }
+            else if(permissionType == WRITE && hasWritePermission()) {
+                return false;
+            }
         }
 
         // Permission required if the native url lies outside the allowed storage directories
@@ -1092,9 +1089,9 @@ public class FileUtils extends CordovaPlugin {
                             result = new PluginResult(PluginResult.Status.OK, os.toByteArray(), true);
             				break;
             			default: // Base64.
-                        byte[] base64 = Base64.encode(os.toByteArray(), Base64.NO_WRAP);
-            			String s = "data:" + contentType + ";base64," + new String(base64, "US-ASCII");
-            			result = new PluginResult(PluginResult.Status.OK, s);
+                            byte[] base64 = Base64.encode(os.toByteArray(), Base64.NO_WRAP);
+                            String s = "data:" + contentType + ";base64," + new String(base64, "US-ASCII");
+                            result = new PluginResult(PluginResult.Status.OK, s);
             			}
 
             			callbackContext.sendPluginResult(result);

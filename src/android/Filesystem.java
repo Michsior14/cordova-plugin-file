@@ -215,7 +215,7 @@ public abstract class Filesystem {
     protected LocalFilesystemURL makeDestinationURL(String newName, LocalFilesystemURL srcURL, LocalFilesystemURL destURL, boolean isDirectory) {
         // I know this looks weird but it is to work around a JSON bug.
         if ("null".equals(newName) || "".equals(newName)) {
-            newName = srcURL.uri.getLastPathSegment();;
+            newName = srcURL.uri.getLastPathSegment();
         }
 
         String newDest = destURL.uri.toString();
