@@ -76,7 +76,7 @@ public class DirectoryManager {
     public static long getFreeStorageSpace(Activity activity) {
         long freeSpaceInBytes = testSaveLocationExists() ?
             getFreeSpaceInBytes(Environment.getExternalStorageDirectory().getPath()) :
-            getFreeSpaceInBytes(activity.getFilesDir());
+            getFreeSpaceInBytes(activity.getFilesDir().getPath());
         return freeSpaceInBytes / 1024;
     }
 

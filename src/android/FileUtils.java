@@ -265,6 +265,7 @@ public class FileUtils extends CordovaPlugin {
     }
 
     public boolean execute(String action, final String rawArgs, final CallbackContext callbackContext) {
+
         if (!configured) {
             callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, "File plugin is not configured. Please see the README.md file for details on how to update config.xml"));
             return true;
@@ -281,7 +282,7 @@ public class FileUtils extends CordovaPlugin {
             threadhelper( new FileOp( ){
                 public void run(JSONArray args) {
                     // The getFreeDiskSpace plugin API is not documented, but some apps call it anyway via exec().
-                    long l = DirectoryManager.getFreeStorageSpace(this.activity);
+                    long l = DirectoryManager.getFreeStorageSpace(FileUtils.filePlugin.activity);
                     callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, l));
                 }
             }, rawArgs, callbackContext);
@@ -290,7 +291,7 @@ public class FileUtils extends CordovaPlugin {
             threadhelper( new FileOp( ){
                 public void run(JSONArray args) throws JSONException {
                     String fname=args.getString(0);
-                    boolean b = DirectoryManager.testFileExists(this.activity, fname);
+                    boolean b = DirectoryManager.testFileExists(FileUtils.filePlugin.activity, fname);
                     callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, b));
                 }
             }, rawArgs, callbackContext);
@@ -299,7 +300,7 @@ public class FileUtils extends CordovaPlugin {
             threadhelper( new FileOp( ){
                 public void run(JSONArray args) throws JSONException {
                     String fname=args.getString(0);
-                    boolean b = DirectoryManager.testFileExists(this.activity, fname);
+                    boolean b = DirectoryManager.testFileExists(FileUtils.filePlugin.activity, fname);
                     callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, b));
                 }
             }, rawArgs, callbackContext);
